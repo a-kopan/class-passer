@@ -17,7 +17,7 @@ def play_materials():
         PASSWORD = data['password']
         URL = data['url']
         SESSION_LENGTH_IN_MINUTES = 9999999
-        DESIRED_FINISH_TIME = datetime.datetime().now() + datetime.timedelta(0, SESSION_LENGTH_IN_MINUTES*60)
+        DESIRED_FINISH_TIME = datetime.datetime.now() + datetime.timedelta(0, SESSION_LENGTH_IN_MINUTES*60)
         
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False, slow_mo=500, args=['--start-maximized'])
