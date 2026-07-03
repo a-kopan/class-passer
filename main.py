@@ -8,7 +8,9 @@ In the same directory create a config.json file which has 3 values: login, passw
 URL is supposed to be your course url, https://studia-online.pl/kurs/{COURSE_N} - check manually on the webstie
 """
 def check_if_should_finish(desired_finish_time:datetime.datetime):
-    if datetime.datetime.now() > desired_finish_time: exit()
+    if datetime.datetime.now() > desired_finish_time: 
+        print("Exceeded finish time, closing the browser")
+        exit()
     
 def play_materials():
     with open('config.json', encoding='UTF-8') as f:
@@ -79,6 +81,7 @@ def play_materials():
                     presentation = page.locator(".pdf-container").first
                     
                     for video in videos:
+                        check_if_should_finish(DESIRED_FINISH_TIME)
                         print(f"Starting Video")
                         video.click(force=True)
                         time.sleep(3)
@@ -87,7 +90,6 @@ def play_materials():
                         duration = int(str_time[0])*3600 + int(str_time[1])*60 + int(str_time[2])
                         
                         time.sleep(duration)
-                        check_if_should_finish(DESIRED_FINISH_TIME)
                     
                     #wait for presentation progress to finish
                     progress_locator = presentation.locator(
