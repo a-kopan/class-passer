@@ -4,8 +4,9 @@ import json
 import datetime
 
 """
-In the same directory create a config.json file which has 3 values: login, password and url
+In the same directory create a config.json file which has 3 values: login, password, url and session length
 URL is supposed to be your course url, https://studia-online.pl/kurs/{COURSE_N} - check manually on the webstie
+Session length terminates the script as the worktime exceeds the desired finish time (always finishes video before checking)
 """
 def check_if_should_finish(desired_finish_time:datetime.datetime):
     if datetime.datetime.now() > desired_finish_time: 
@@ -18,7 +19,7 @@ def play_materials():
         LOGIN = data['login']
         PASSWORD = data['password']
         URL = data['url']
-        SESSION_LENGTH_IN_MINUTES = 9999999
+        SESSION_LENGTH_IN_MINUTES = data['session_length_in_minutes']
         DESIRED_FINISH_TIME = datetime.datetime.now() + datetime.timedelta(0, SESSION_LENGTH_IN_MINUTES*60)
         
     with sync_playwright() as p:
