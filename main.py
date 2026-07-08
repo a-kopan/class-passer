@@ -1,7 +1,24 @@
+import os
+import logging
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 import time
 import json
 import datetime
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+log_dir = os.path.join(script_dir, 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
+log_filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S.log")
+log_filepath = os.path.join(log_dir, log_filename)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_filepath, encoding='utf-8')
+    ]
+)
 
 """
 In the same directory create a config.json file which has 3 values: login, password, url and session length
@@ -10,7 +27,7 @@ Session length terminates the script as the worktime exceeds the desired finish 
 """
 def check_if_should_finish(desired_finish_time:datetime.datetime):
     if datetime.datetime.now() > desired_finish_time: 
-        print("Exceeded finish time, closing the browser")
+        logging.info("Exceeded finish time, closing the browser")
         exit()
     
 def play_materials():
@@ -30,28 +47,27 @@ def play_materials():
         page = context.new_page()
 
         try:
-            print("Navigating to website")
+            logging.info("Navigating to website")
             page.goto(URL)
 
-            
-            print("Accepting cookies")
+            logging.info("Accepting cookies")
             page.locator(".cky-btn-accept").first.click()
             
-            print(f"Filling login")
+            logging.info("Filling login")
             page.locator("#login").first.fill(LOGIN)
             
-            print(f"Filling password")
+            logging.info("Filling password")
             page.locator("#pass").first.fill(PASSWORD)
             
-            print(f"Logging in")
+            logging.info("Logging in")
             page.locator(".btn-primary").first.click()
             
             page.wait_for_url("**/dashboard*", timeout=5000)
             
-            print(f"Go to course url")
+            logging.info("Go to course url")
             page.goto(URL)
             
-            print(f"Dissmiss session info button")
+            logging.info("Dissmiss session info button")
             page.locator(".exam-section__modal--btn").first.click()
             
             classes = page.locator(".course-topic__list").locator(".course-topic").all()
@@ -63,7 +79,7 @@ def play_materials():
             ]
             
             for subject in clean_subjects:
-                print(f"Picking subject")
+                logging.info("Picking subject")
                 subject.locator(".course-topic__link").first.click()
                 time.sleep(1.5)
                 
@@ -74,7 +90,7 @@ def play_materials():
                 ]
                 
                 for lesson in clean_lessons:
-                    print("Clicking lesson")
+                    logging.info("Clicking lesson")
                     lesson.locator(".course-lesson__link").first.click()
                     videos = page.locator(
                         '.course-material__progress-area:not(:has-text("100%"))'
@@ -83,7 +99,7 @@ def play_materials():
                     
                     for video in videos:
                         check_if_should_finish(DESIRED_FINISH_TIME)
-                        print(f"Starting Video")
+                        logging.info("Starting Video")
                         video.click(force=True)
                         time.sleep(3)
                         str_time = video.locator(".vjs-remaining-time-display").first.text_content().split(':')
@@ -92,28 +108,28 @@ def play_materials():
                         
                         time.sleep(duration)
                     
-                    #wait for presentation progress to finish
+                    # wait for presentation progress to finish
                     progress_locator = presentation.locator(
                             "xpath=preceding-sibling::div[contains(@class, 'course-material__progress-area')][1]"
                         ).locator(".course-material__progress-text")
                     
-                    print("Waiting for presentation to finish")
+                    logging.info("Waiting for presentation to finish")
                     
                     while True:
                         progress_text = progress_locator.text_content()
                         
                         if progress_text and "100%" in progress_text:
-                            print("Presentation finished (100%)!")
+                            logging.info("Presentation finished (100%)!")
                             break
                         
-                        print(f"Current progress: {progress_text.strip() if progress_text else 'Unknown'}. Checking again in 60s...")
+                        logging.info(f"Current progress: {progress_text.strip() if progress_text else 'Unknown'}. Checking again in 60s...")
                         check_if_should_finish(DESIRED_FINISH_TIME)
                         time.sleep(60)
                         
         except PlaywrightTimeoutError:
-            print("An element took too long to load or could not be found.")
+            logging.error("An element took too long to load or could not be found.", exc_info=True)
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            logging.error(f"An unexpected error occurred: {e}", exc_info=True)
         finally:
             browser.close()
 
