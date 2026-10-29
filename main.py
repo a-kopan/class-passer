@@ -27,7 +27,7 @@ Session length terminates the script as the worktime exceeds the desired finish 
 """
 def check_if_should_finish(desired_finish_time:datetime.datetime):
     if datetime.datetime.now() > desired_finish_time: 
-        logging.info("Exceeded finish time, closing the browser")
+        print("Exceeded finish time, closing the browser")
         exit()
     
 def play_materials():
@@ -47,28 +47,28 @@ def play_materials():
         page = context.new_page()
 
         try:
-            logging.info("Navigating to website")
+            print("Navigating to website")
             page.goto(URL)
 
-            logging.info("Accepting cookies")
+            print("Accepting cookies")
             page.locator(".cky-btn-accept").first.click()
-            
-            logging.info("Filling login")
+             
+            print("Filling login")
             page.locator("#login").first.fill(LOGIN)
-            
-            logging.info("Filling password")
+             
+            print("Filling password")
             page.locator("#pass").first.fill(PASSWORD)
-            
-            logging.info("Logging in")
+             
+            print("Logging in")
             page.locator(".btn-primary").first.click()
-            
+             
             page.wait_for_url("**/dashboard*", timeout=5000)
-            
-            logging.info("Go to course url")
+             
+            print("Go to course url")
             page.goto(URL)
-            
-            logging.info("Dissmiss session info button")
-            page.locator(".exam-section__modal--btn").first.click()
+             
+            print("Dissmiss session info button")
+            #page.locator(".interactive-close-button-container").first.click()
             
             classes = page.locator(".course-topic__list").locator(".course-topic").all()
             
@@ -79,7 +79,7 @@ def play_materials():
             ]
             
             for subject in clean_subjects:
-                logging.info("Picking subject")
+                print("Picking subject")
                 subject.locator(".course-topic__link").first.click()
                 time.sleep(1.5)
                 
@@ -90,39 +90,42 @@ def play_materials():
                 ]
                 
                 for lesson in clean_lessons:
-                    logging.info("Clicking lesson")
+                    print("Clicking lesson")
                     lesson.locator(".course-lesson__link").first.click()
                     videos = page.locator(
                         '.course-material__progress-area:not(:has-text("100%"))'
                     ).locator("+ span > .video-js").all()
                     presentation = page.locator(".pdf-container").first
-                    
+                     
                     for video in videos:
                         check_if_should_finish(DESIRED_FINISH_TIME)
-                        logging.info("Starting Video")
+                        print("Starting Video")
                         video.click(force=True)
                         time.sleep(3)
                         str_time = video.locator(".vjs-remaining-time-display").first.text_content().split(':')
                          
-                        duration = int(str_time[0])*3600 + int(str_time[1])*60 + int(str_time[2])
-                        
+                        if len(str_time)==3:
+                            duration = int(str_time[0])*3600 + int(str_time[1])*60 + int(str_time[2])
+                        else: duration = int(str_time[0])*3600 + int(str_time[1])*60
+                        print(f"Sleeping for {duration}")
                         time.sleep(duration)
+                        print(f"Finished sleeping")
                     
                     # wait for presentation progress to finish
                     progress_locator = presentation.locator(
                             "xpath=preceding-sibling::div[contains(@class, 'course-material__progress-area')][1]"
                         ).locator(".course-material__progress-text")
                     
-                    logging.info("Waiting for presentation to finish")
+                    print("Waiting for presentation to finish")
                     
                     while True:
                         progress_text = progress_locator.text_content()
                         
                         if progress_text and "100%" in progress_text:
-                            logging.info("Presentation finished (100%)!")
+                            print("Presentation finished (100%)!")
                             break
                         
-                        logging.info(f"Current progress: {progress_text.strip() if progress_text else 'Unknown'}. Checking again in 60s...")
+                        print(f"Current progress: {progress_text.strip() if progress_text else 'Unknown'}. Checking again in 60s...")
                         check_if_should_finish(DESIRED_FINISH_TIME)
                         time.sleep(60)
                         
